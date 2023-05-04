@@ -4,45 +4,50 @@ declare(strict_types=1);
 
 namespace App;
 
-use InvalidArgumentException;
+use App\Entity\ClientCRM;
+use App\Entity\Manager;
+use App\Service\CRM\BazSender;
+use App\Service\Validation\ManagerService;
+use App\Service\Validation\StatusCode;
 
 /**
  * Class CrmManager
  * @package App
  */
-class CrmManager
+class CrmManager extends StatusCode
 {
     private BazSender $client;
 
     /**
-     * @var array
+     * @var Manager
      */
-    private $settings;
+    private Manager $manager;
 
-    public function __construct(array $settings)
+    public function __construct(Manager $manager)
     {
-        if (empty($settings['user'])) {
-            throw new InvalidArgumentException('User must be set!');
-        }
-
-        if (empty($settings['passwd'])) {
-            throw new InvalidArgumentException('Password must be set!');
-        }
-
-        $this->settings = $settings;
-        $this->client = new BazSender();
+        ManagerService::Validate($manager);
+        $this->manager = $manager;
     }
 
     /**
      * Sends the person to a crm
      *
-     * @param array $clientEntity
+     * @param ClientCRM $clientCRM
      * @return int
+     * @throws \Exception
      */
-    public function sendPerson(array $clientEntity): int
+    public function sendPerson(ClientCRM $clientCRM): int
     {
-        $this->client->setCredentials($this->settings);
+        $this->client->setCredentials($this->manager);
 
-        return $this->client->send($clientEntity);
+        switch ($clientCRM->getCrm()) {
+            case 'BazSender':
+                $this->client = new BazSender();
+                break;
+            default:
+                return self::STATUS_NOT_FOUND;
+        }
+
+        return $this->client->send($clientCRM);
     }
 }

@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App;
 
-final class Sender
-{
-    protected array $settings;
+use App\Entity\Manager;
+use App\Service\Validation\StatusCode;
 
-    public function setCredentials(array $settings)
+class Sender extends StatusCode
+{
+    protected Manager $manager;
+
+    public function setCredentials(Manager $manager)
     {
-        $this->settings = $settings;
+        $this->manager = $manager;
     }
 }
